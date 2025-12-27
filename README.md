@@ -9,7 +9,8 @@
 
 This repository contains code for asynchronous example api using the [Fast Api framework](https://fastapi.tiangolo.com/) ,Uvicorn server and Postgres Database to perform crud operations on notes.
 
-![Fast-api](images/fast-api-scrnsht.png)
+![Fast-api](<img width="1187" height="558" alt="image" src="https://github.com/user-attachments/assets/ced70524-1588-488e-aec6-614c65258ee9" />
+)
 
 ## Accompanying Article
 
