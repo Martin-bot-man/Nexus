@@ -1,25 +1,12 @@
-# pull official base image
-FROM node:18.0.0-alpine AS base
+FROM node:20-alpine
 
-# set work directory
 WORKDIR /usr/src/app
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+COPY package.json yarn.lock ./
+RUN yarn install --frozen-lockfile
 
-# copy requirements file
-COPY ./package.json /usr/src/app/package.json
+COPY . .
 
-# install dependencies
-RUN set -eux \
-	&& apk add --no-cache --virtual .build-deps build-base \
-	libressl-dev libffi-dev gcc musl-dev python3-dev \
-	postgresql-dev \
-	&& npm install --upgrade npm \
-	# && npm install -g yarn\
-	&& yarn \
-	&& rm -rf /root/.cache/pip
+EXPOSE 5173
 
-# copy project
-COPY . /usr/src/app/
+CMD ["yarn", "dev", "--host", "0.0.0.0", "--port", "5173"]

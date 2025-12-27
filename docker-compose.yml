@@ -1,38 +1,58 @@
 services:
-  web:
-    build: ./src
-    command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
-    volumes:
-      - ./src/:/usr/src/app/
-    ports:
-      - "8002:8000"
+  db:
+    image: postgres:15-alpine
+    container_name: nexus_db
     environment:
-      DATABASE_URL: postgresql://hello_fastapi:hello_fastapi@db/hello_fastapi_dev
+      POSTGRES_USER: fast_api
+      POSTGRES_PASSWORD: fast_api
+      POSTGRES_DB: fast_api_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fast_api"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus_network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nexus_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://fast_api:fast_api@db:5432/fast_api_db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/usr/src/app
+    networks:
+      - nexus_network
 
   frontend:
-    build: ./daisyui-vue-client
-    command: yarn dev
-    volumes:
-      - ./daisyui-vue-client:/usr/src/app/
+    build:
+      context: ./daisyui-vue-client
+      dockerfile: Dockerfile
+    container_name: nexus_frontend
     ports:
-      - "3000:3000"
-    depends_on:
-      - web
-
-  db:
-    image: postgres:13.1-alpine
+      - "5173:3000"
     environment:
-      POSTGRES_USER: hello_fastapi
-      POSTGRES_PASSWORD: hello_fastapi
-      POSTGRES_DB: hello_fastapi_dev
+      - VITE_API_URL=http://localhost:8000
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - ./daisyui-vue-client/src:/usr/src/app/src
+    networks:
+      - nexus_network
 
 volumes:
   postgres_data:
 
 networks:
-  default:
-    name: hello_fastapi
+  nexus_network:
+    driver: bridge

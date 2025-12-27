@@ -1,37 +1,32 @@
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from datetime import datetime
 
-from app.api import notes, ping
-from app.db import engine, metadata, database
-
-metadata.create_all(engine)
-
-app = FastAPI()
-
-origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:5173",
-    "*"
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["DELETE", "GET", "POST", "PUT"],
-    allow_headers=["*"],
+app = FastAPI(
+    title="NEXUS",
+    description="Operational Fraud Detection Platform",
+    version="0.1.0"
 )
 
-@app.on_event("startup")
-async def startup():
-    await database.connect()
+@app.get("/")
+async def root():
+    return {
+        "message": "🚀 NEXUS - Operational Fraud Detection Platform",
+        "status": "operational",
+        "version": "0.1.0"
+    }
 
+@app.get("/health")
+async def health():
+    return {"status": "healthy"}
 
-@app.on_event("shutdown")
-async def shutdown():
-    await database.disconnect()
+@app.post("/api/fraud/transactions/analyze")
+async def analyze_transaction(data: dict):
+    return {"risk_score": 0.3, "risk_level": "low", "is_flagged": False}
 
+@app.post("/api/fraud/checks/analyze")
+async def analyze_check(data: dict):
+    return {"risk_score": 0.2, "risk_level": "low", "is_flagged": False}
 
-app.include_router(ping.router)
-app.include_router(notes.router, prefix="/notes", tags=["notes"])
+@app.get("/api/fraud/dashboard/summary")
+async def dashboard():
+    return {"flagged_transactions": 5, "alerts": []}
