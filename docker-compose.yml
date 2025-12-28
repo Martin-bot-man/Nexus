@@ -1,58 +1,63 @@
 services:
-  db:
+  nexus_db:
     image: postgres:15-alpine
     container_name: nexus_db
     environment:
-      POSTGRES_USER: fast_api
-      POSTGRES_PASSWORD: fast_api
-      POSTGRES_DB: fast_api_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nexus
+    volumes:
+      - nexus_postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fast_api"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - nexus_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  web:
+  nexus_api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: nexus_api
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/usr/src/app
+    environment:
+      DATABASE_URL: postgresql://postgres:password@nexus_db:5432/nexus
+      PYTHONPATH: /usr/src/app
+      ENV: development
+    # 🎯 Corrected Path based on your folder structure
+    command: uvicorn src.app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
-    environment:
-      DATABASE_URL: postgresql://fast_api:fast_api@db:5432/fast_api_db
     depends_on:
-      db:
+      nexus_db:
         condition: service_healthy
-    volumes:
-      - ./src:/usr/src/app
     networks:
       - nexus_network
 
-  frontend:
+  nexus_frontend:
     build:
       context: ./daisyui-vue-client
       dockerfile: Dockerfile
     container_name: nexus_frontend
+    # 🌍 Vite Development Port
     ports:
-      - "5173:3000"
-    environment:
-      - VITE_API_URL=http://localhost:8000
+      - "5173:5173"
     volumes:
-      - ./daisyui-vue-client/src:/usr/src/app/src
+      - ./daisyui-vue-client:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - nexus_api
     networks:
       - nexus_network
-
-volumes:
-  postgres_data:
 
 networks:
   nexus_network:
     driver: bridge
+
+volumes:
+  nexus_postgres_data:

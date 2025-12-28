@@ -7,8 +7,11 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "@heroicons/vue": "^2.2.0",
     "axios": "^1.3.4",
-    "vue": "^3.2.31"
+    "chart.js": "^4.5.1",
+    "vue": "^3.2.31",
+    "vue-chartjs": "^5.3.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.2.4",

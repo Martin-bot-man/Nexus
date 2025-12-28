@@ -1,11 +1,9 @@
 import pytest
-from starlette.testclient import TestClient
+from fastapi.testclient import TestClient
 
-from app.main import app
-
+from src.main import app  # ← API Gateway
 
 @pytest.fixture(scope="module")
-def test_app():
-    client = TestClient(app)
-    yield client  # testing happens here
-    
+def client():
+    with TestClient(app) as test_client:
+        yield test_client
